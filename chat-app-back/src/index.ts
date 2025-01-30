@@ -1,11 +1,13 @@
 import express, { Request, Response } from "express";
+import authRoutes from "./routes/auth.route";
+import messagesRoutes from "./routes/messages.route"
 
 const app = express();
 
 
-app.get("/", (req : Request , res : Response) => {
-    res.status(202).send("Hello World!")
-})
+// Routes that I should Use
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messagesRoutes);
 
 
 app.listen(2345, ()=> {
