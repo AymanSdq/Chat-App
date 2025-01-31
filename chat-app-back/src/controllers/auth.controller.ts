@@ -70,7 +70,37 @@ export const signUp = async ( request : Request, response : Response) => {
 
 // Login Controller
 export const login = async ( request : Request, response : Response) => {
-    
+    try {
+        // Getting the username and the password
+        const {username, password} = request.body;
+
+        // Finding the username if it Exist
+        const user = await prisma.user.findUnique({ where : {username}})
+        if(!user){
+            response.status(400).json({Error : "Username or Password are Incorect !"})
+            return;
+        }
+
+        // Verifying if the password is correct or no
+        const isPasswordCorrect = await bcrypt.compare(password , user.password);
+        if(!isPasswordCorrect){
+            response.status(400).json({Error : "Username or Password are Incorect !"})
+            return
+        }
+
+        // Generate Token if the Credentials are Correct
+        genToken(user.id, response);
+        response.status(202).json({
+            id : user.id,
+            fullName : user.fullName,
+            username : user.id,
+            profilePic : user.profilePic
+        })
+        
+    } catch (error : any) {
+        console.log("Error signing up : " , error.message);
+        response.status(500).json({Error : "Internal Server Error !"})
+    }
 }
 
 // Log out Controller
