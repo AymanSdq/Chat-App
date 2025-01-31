@@ -1,6 +1,7 @@
 import { Request , response, Response } from "express";
 import prisma from "../db/prisma";
 import bcrypt from "bcryptjs"
+import genToken from "../utils/genToken";
 
 // Signup Controller
 export const signUp = async ( request : Request, response : Response) => {
@@ -30,10 +31,40 @@ export const signUp = async ( request : Request, response : Response) => {
         // Hashing the password with Bcrypt
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(password, salt)
-        
 
-    } catch (error) {
-        
+        // Using API for profile Picture
+        const boyProfilePic = `https://avatar.iran.liara.run/public/boy?username=${username}`
+        const girlProfilePic = `https://avatar.iran.liara.run/public/girl?username=${username}`
+
+        // Creating the User
+        const newUser = await prisma.user.create({
+            data : {
+                fullName,
+                username,
+                password : hashedPassword,
+                gender,
+                profilePic : gender === "male" ? boyProfilePic : girlProfilePic
+            }
+        })
+
+        // Checking if the user is create 
+        if(newUser){
+            // Creating a Token and saving it into cookies
+            genToken(newUser.id , response)
+            // Saving data
+            response.status(202).json({
+                id : newUser.id,
+                fullName : newUser.fullName,
+                username : newUser.username,
+                profilePic : newUser.profilePic
+            })
+        }else{
+            response.status(400).json({Error : "Invalide user data!"})
+        }
+
+    } catch (error : any ) {
+        console.log("Error signing up : " , error.message);
+        response.status(500).json({Error : "Internal Server Error !"})
     }
 }
 
