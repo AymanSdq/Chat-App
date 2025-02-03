@@ -3,6 +3,31 @@ import prisma from "../db/prisma";
 import bcrypt from "bcryptjs"
 import genToken from "../utils/genToken";
 
+
+
+// To Check if the user is connected or not
+export const getMe = async (request : Request, response : Response) => {
+    try {
+        const user = await prisma.user.findUnique({where : {id : request.user.id}})
+
+        if(!user) {
+            response.status(402).json({Message : "User not Found!"})
+            return
+        }
+
+        response.status(202).json({
+            id : user.id,
+            fullName : user.fullName,
+            username : user.username,
+            profilePic : user.profilePic
+        })
+
+        
+    } catch (error : any) {
+        console.log("Error signing up : " , error.message);
+        response.status(500).json({Error : "Internal Server Error !"})
+    }
+}
 // Signup Controller
 export const signUp = async ( request : Request, response : Response) => {
     try {
@@ -98,12 +123,20 @@ export const login = async ( request : Request, response : Response) => {
         })
         
     } catch (error : any) {
-        console.log("Error signing up : " , error.message);
+        console.log("Error Login : " , error.message);
         response.status(500).json({Error : "Internal Server Error !"})
     }
 }
 
 // Log out Controller
 export const logOut = async ( request : Request, response : Response) => {
+    try {
+        // Removing the cookie for log out
+        response.cookie("jwt", "", {maxAge : 0});
+        response.status(200).json({message : "Logged out successfully !"})
+    } catch (error : any) {
+        console.log("Error Logout : " , error.message);
+        response.status(500).json({Error : "Internal Server Error !"})
+    }
     
 }
