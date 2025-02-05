@@ -67,7 +67,31 @@ export const sendMessage = async (request : Request, response : Response) => {
 
 export const getMessages = async (request : Request, response : Response) => {
     try {
-        
+        // Getting the receiver ID as receiverId
+        const {id : receiverId} = request.params;
+        // Getting the senderId
+        const senderId = request.user.id
+        const conversation = await prisma.conversation.findFirst({ where : {
+            participantIds : {
+                hasEvery : [senderId, receiverId]
+            }
+            },
+            include : {
+                messages : {
+                    orderBy :{
+                        createdAt : "asc"
+                    }
+                }
+            }
+        });
+
+        if(!conversation){
+            response.status(404).json({Messages : []})
+            return;
+        }
+
+        // There is messages
+        response.status(202).json(conversation.messages)
     } catch (error : any) {
         console.error("Error Message : ", error.message);
         response.status(502).json({Error : "Internal Server Error!"})
